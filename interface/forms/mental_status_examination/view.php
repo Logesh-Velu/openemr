@@ -47,7 +47,6 @@ function parseField($field) {
 }
 
 
-// Use this to fetch checkbox data
 $appearance = parseField($obj['appearance'] ?? '');
 $hallucinations = parseField($obj['hallucinations'] ?? '');
 $delusion = parseField($obj['delusion'] ?? '');
@@ -63,7 +62,6 @@ $weight = parseField($obj['weight'] ?? '');
 $eating_disorders = parseField($obj['eating_disorders'] ?? '');
 $self_harm = parseField($obj['self_harm'] ?? '');
 
-// Radio/Single value fields don't need explode
 $attention = $obj['attention'] ?? '';
 $concentration = $obj['concentration'] ?? '';
 $intelligence = $obj['intelligence'] ?? '';

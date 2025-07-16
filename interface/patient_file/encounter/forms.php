@@ -962,12 +962,14 @@ if (
             "' onclick='top.restoreSession()'>" . xlt('Print') . "</a>";
         }
         if (trim($form_text) == 'Mental Status') {
-            // A link for a nice printout of the LBF
-            echo "<a target='_blank' 
-                href='$rootdir/forms/mental_status_examination/generate_pdf.php?id={$iter['form_id']}' 
-                class='btn btn-text btn-sm' 
-                title='" . xla('Print this form') . "'>" . xlt('Download PDF') . "</a>";
-        }
+                // A link for a nice printout of the LBF
+                echo "<a target='_blank' 
+                    href='$rootdir/forms/mental_status_examination/generate_pdf.php?id={$iter['form_id']}' 
+                    class='btn btn-text btn-sm btn-fill' 
+                    title='" . xla('Print this form') . "'>
+                    <i class='bi bi-file-earmark-pdf-fill'></i> " . xlt('Download PDF') . "</a>";
+            }
+
 
         if (AclMain::aclCheckCore('admin', 'super')) {
             if ($formdir != 'newpatient' && $formdir != 'newGroupEncounter') {

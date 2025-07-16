@@ -62,7 +62,7 @@ $dompdf->render();
 
 // Output to browser
 header("Content-Type: application/pdf");
-header("Content-Disposition: inline; filename=\"mental_status.pdf\"");
+header("Content-Disposition: attachment; filename=\"mental_status.pdf\"");
 
 echo $dompdf->output();
 exit;

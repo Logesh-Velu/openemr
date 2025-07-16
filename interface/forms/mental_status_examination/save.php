@@ -10,7 +10,6 @@ if (!CsrfUtils::verifyCsrfToken($_POST["csrf_token_form"] ?? '')) {
     CsrfUtils::csrfNotVerified();
 }
 
-// Collect and sanitize all input data
 $appearance = isset($_POST['appearance']) ? implode(", ", array_map('text', $_POST['appearance'])) : "";
 $attention = text($_POST['attention'] ?? "");
 $concentration = text($_POST['concentration'] ?? "");
@@ -35,11 +34,11 @@ $weight = isset($_POST['weight']) ? implode(", ", array_map('text', $_POST['weig
 $eating_disorders = isset($_POST['eating_disorders']) ? implode(", ", array_map('text', $_POST['eating_disorders'])) : "";
 $self_harm = isset($_POST['self_harm']) ? implode(", ", array_map('text', $_POST['self_harm'])) : "";
 
-// Mode: new or update
+
 $mode = $_GET['mode'] ?? 'new';
 $form_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
-// Get current patient/session info
+
 $pid = $_SESSION['pid'] ?? null;
 $encounter = $_SESSION['encounter'] ?? null;
 $userauthorized = $_SESSION['userauthorized'] ?? null;
@@ -49,7 +48,7 @@ if (empty($pid) || empty($encounter)) {
     die(xlt("Invalid session data"));
 }
 
-// Save or update
+
 if ($mode === 'new') {
     $data = [
         $pid, $activity, $encounter,
@@ -94,7 +93,7 @@ if ($mode === 'new') {
     }
 }
 
-// Redirect back
+
 formHeader("Redirecting...");
 formJump();
 formFooter();

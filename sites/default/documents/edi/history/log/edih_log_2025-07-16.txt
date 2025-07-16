@@ -1,0 +1,35 @@
+20250716:050710 EDI_History Setup should not overwrite existing data.<br />
+Setup: directory C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi<br />
+created folder C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history<br />
+created folder C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\csv<br />
+created folder C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\archive<br />
+created folder C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\log<br />
+created folder C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\tmp
+folder for f837 exists C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi<br />
+created type folder C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\f997<br />
+created type folder C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\f276<br />
+created type folder C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\f277<br />
+created type folder C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\f270<br />
+created type folder C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\f271<br />
+created type folder C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\f278<br />
+
+20250716:050710 _GET request 
+ srvinfo => yes  csrf_token_form => 972bc89e93b22ac46a24929be130ec799c2189ce 
+20250716:050710 EDI_History Setup should not overwrite existing data.<br />
+Setup: directory C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi<br />
+created folder C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history<br />
+created folder C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\csv<br />
+created folder C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\archive<br />
+created folder C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\log<br />
+created folder C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\tmp
+folder for f837 exists C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi<br />
+folder for f997 exists C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\f997<br />
+folder for f276 exists C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\f276<br />
+folder for f277 exists C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\f277<br />
+folder for f270 exists C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\f270<br />
+folder for f271 exists C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\f271<br />
+folder for f278 exists C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\f278<br />
+folder for f835 exists C:/wamp64/www/openemr-7.0.3/sites/default\documents\edi\history\f835<br />
+
+20250716:050710 _GET request 
+ loglist => yes  csrf_token_form => 972bc89e93b22ac46a24929be130ec799c2189ce 

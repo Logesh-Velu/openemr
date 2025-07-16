@@ -89,7 +89,7 @@ if ($_POST['mode'] == 'Stripe') {
         $cc['transId'] = $response->getTransactionReference();
         $cc['cardNumber'] = "******** " . $r['last4'];
         $cc['cc_type'] = $r['brand'];
-        $cc['zip'] = $r->address_zip;
+        $cc['zip'] = $r['address_zip'] ?? null; 
         $ccaudit = json_encode($cc);
     } catch (\Exception $ex) {
         echo $ex->getMessage();

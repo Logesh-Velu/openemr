@@ -17,13 +17,11 @@ function mental_status_examination_report($pid, $encounter, $cols, $id)
     $count = 0;
     $data = formFetch("form_mental_status", $id);
 
-    // Check if form data is valid
     if (!$data || !is_array($data)) {
         echo "<p><b>" . xlt("No data found for this form.") . "</b></p>";
         return;
     }
 
-    // Remove keys we don't want to display
     unset($data['form_id']);
     unset($data['uuid']);
     unset($data['encounter']);
@@ -42,7 +40,6 @@ function mental_status_examination_report($pid, $encounter, $cols, $id)
             continue;
         }
 
-        // Convert checkboxes or multi-selects
         if ($value === "on") {
             $value = "yes";
         }
