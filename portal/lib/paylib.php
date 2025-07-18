@@ -106,7 +106,8 @@ if ($_POST['mode'] == 'AuthorizeNet') {
 }
 
 if ($_POST['mode'] == 'Stripe') {
-    $form_pid = $_POST['form_pid'];
+
+    $form_pid = $_POST['pid'];
     $pay = new PaymentGateway("Stripe");
     $transaction['amount'] = $_POST['payment'];
     $transaction['currency'] = "USD";
@@ -125,7 +126,7 @@ if ($_POST['mode'] == 'Stripe') {
         $cc['transId'] = $response->getTransactionReference();
         $cc['cardNumber'] = "******** " . $r['last4'];
         $cc['cc_type'] = $r['brand'];
-        $cc['zip'] = $r->address_zip;
+        $cc['zip'] = $r['address_zip'];
         $ccaudit = json_encode($cc);
         $invoice = $_POST['invValues'] ?? '';
     } catch (\Exception $ex) {
@@ -213,9 +214,9 @@ function CloseAudit($pid, $amts, $cc, $action = 'payment posted', $paction = 'no
         $audit['patient_id'] = $pid;
         $audit['activity'] = "payment";
         $audit['require_audit'] = "1";
-        $audit['pending_action'] = $paction;//'review';//
+        $audit['pending_action'] = $paction; //'review';//
         $audit['action_taken'] = $action;
-        $audit['status'] = "closed";//'waiting';
+        $audit['status'] = "closed"; //'waiting';
         $audit['narrative'] = "Payment authorized.";
         $audit['table_action'] = "update";
         $audit['table_args'] = $amts;

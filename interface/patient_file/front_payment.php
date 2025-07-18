@@ -1493,7 +1493,7 @@ $facilityService = new FacilityService();
                                                 <div class="col-sm-6">
                                                     <label class="control-label"><?php echo xlt('Card Number'); ?></label>
                                                     <input name="cardNumber" id="cardNumber" type="text" class="form-control"
-                                                        autocomplete="off" maxlength="19" pattern="\d+"
+                                                        autocomplete="on" maxlength="19" pattern="\d+"
                                                         onchange="validateCC()"
                                                         title="<?php echo xla('Card Number'); ?>" />
                                                 </div>

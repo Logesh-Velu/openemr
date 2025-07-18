@@ -77,7 +77,9 @@ if ($recid) {
 $ccdata = array();
 $invdata = array();
 if ($edata) {
+  
     $ccdata = json_decode($cryptoGen->decryptStandard($edata['checksum']), true);
+     
     $invdata = json_decode($edata['table_args'], true);
     echo "<script>var jsondata='" . $edata['table_args'] . "';var ccdata='" . $edata['checksum'] . "'</script>";
 }
@@ -964,6 +966,7 @@ if (($_POST['form_save'] ?? null) || ($_REQUEST['receipt'] ?? null)) {
                         }
                         ?>
                     </select></td>
+                    <td><label>Auto Payment<input class="mt-2" value='autopayment' type="checkbox" name="autopayment" id="autopayment"></label></td>
             </tr>
             <?php if (isset($_SESSION['authUserID'])) { ?>
                 <tr height="5">
@@ -1253,7 +1256,7 @@ if (($_POST['form_save'] ?? null) || ($_REQUEST['receipt'] ?? null)) {
                 <span class="font-weight-bold"><?php echo xlt('Exp Date'); ?>:  </span><span id="ed"><?php echo text($ccdata["month"] ?? '') . "/" . text($ccdata["year"] ?? '') ?></span>
                 <span class="font-weight-bold"><?php echo xlt('CVV'); ?>:  </span><span id="cvvpin"><?php echo text($ccdata["cardCode"] ?? '') ?></span><br />
         <?php } else { ?>
-                <span class="font-weight-bold"><?php echo xlt('Transaction Id'); ?>:  </span><span id="ed"><?php echo text($ccdata["transId"] ?? '') . "/" . text($ccdata["year"]) ?></span>
+                <span class="font-weight-bold"><?php echo xlt('Transaction Id'); ?>:  </span><span id="ed"><?php echo text($ccdata["transId"] ?? '')  ?></span>
                 <span class="font-weight-bold"><?php echo xlt('Authorization'); ?>:  </span><span id="cvvpin"><?php echo text($ccdata["authCode"] ?? '') ?></span><br />
         <?php } ?>
         <span class="font-weight-bold"><?php echo xlt('Charge Total'); ?>:  </span><span id="ct"><?php echo text($invdata["form_paytotal"] ?? '') ?></span><br />
@@ -1261,9 +1264,9 @@ if (($_POST['form_save'] ?? null) || ($_REQUEST['receipt'] ?? null)) {
         </div>
         </div>
         <div>
-        <?php
+        <?php  
         if (!isset($_SESSION['authUserID'])) {
-            if (!isset($ccdata["cardHolderName"])) {
+            if (1) {
                 if ($GLOBALS['payment_gateway'] == 'Sphere') {
                     echo SpherePayment::renderSphereHtml('patient');
                 } else {
@@ -1407,10 +1410,12 @@ if (($_POST['form_save'] ?? null) || ($_REQUEST['receipt'] ?? null)) {
                                 <input type='hidden' name='cc_type' id='cc_type' value=''/>
                                 <input type='hidden' name='payment' id='paymentAmount' value=''/>
                                 <input type='hidden' name='invValues' id='invValues' value=''/>
+                                <input type="hidden" name="pid" id="pid" value="<?php echo attr($pid); ?>" />
+
                             </fieldset>
                         </form>
                     <?php } ?>
-                </div>
+              
                 <!-- Body  -->
                 <div class="modal-footer">
                     <div class="button-group">
@@ -1429,7 +1434,7 @@ if (($_POST['form_save'] ?? null) || ($_REQUEST['receipt'] ?? null)) {
                 </div>
             </div>
         </div>
-    </div>
+    </div>  </div>
     <script>
         var ccerr = <?php echo xlj('Invalid Credit Card Number'); ?>
 

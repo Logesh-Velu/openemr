@@ -1395,8 +1395,8 @@ $partners = $x->_utility_array($x->x12_partner_factory());
                                             $rhtml2 .= "<td></td>\n";
                                         }
                                         if (!$iter['id'] && $rowcnt == 1) {
-                                            $rhtml2 .= "<td><input type='checkbox' value='0' name='claims[" . attr($this_encounter_id) . "][bill]' onclick='set_button_states()' id='CheckBoxBilling" . attr($CheckBoxBilling * 1) . "'>&nbsp;</td>\n";
-                                            $CheckBoxBilling++;
+                                            $rhtml2 .= "<td><input type='checkbox' value='0' name='claims[" . attr($this_encounter_id) . "][bill]' onclick='set_button_states()' id='CheckBoxBilling" . attr($CheckBoxBilling?? null * 1) . "'>&nbsp;</td>\n";
+                                            // $CheckBoxBilling++;
                                         } else {
                                             $rhtml2 .= "<td></td>\n";
                                         }
@@ -1414,10 +1414,10 @@ $partners = $x->_utility_array($x->x12_partner_factory());
                                 ++$rcount;
                             }
                             if (!$missing_mods_only || ($mmo_empty_mod && $mmo_num_charges > 1)) {
-                                if ($DivPut == 'yes') {
-                                    $lhtml .= '</div>';
-                                    $DivPut = 'no';
-                                }
+                                // if ($DivPut == 'yes') {
+                                //     $lhtml .= '</div>';
+                                //     $DivPut = 'no';
+                                // }
                                 echo "<tr style='background-color: " . attr($bgcolor) . ";'>\n<td rowspan='" . attr($rcount) . "' valign='top' width='25%'>\n$lhtml</td>$rhtml\n";
                                 echo "<tr style='background-color: " . attr($bgcolor) . ";'><td colspan='9' height='5'></td></tr>\n";
                             }

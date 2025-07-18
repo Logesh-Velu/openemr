@@ -155,7 +155,7 @@ if (($screen == 'new_payment' && $payment_id * 1 == 0) || ($screen == 'edit_paym
             <input class="form-control datepicker" id='post_to_date' name='post_to_date' type='text' value="<?php echo ($screen == 'new_payment') ? attr(oeFormatShortDate(date('Y-m-d'))) : attr(oeFormatShortDate($PostToDate)); ?>" autocomplete="off">
         </div>
         <div class="forms col-3">
-            <label class="control-label" for="payment_method"><?php echo xlt('Payment Method'); ?>:</label>
+            <label class="control-label" for="payment_method"><?php echo xlt('Payment1 Method'); ?>:</label>
             <div class="pl-0">
                 <?php
                 if ($PaymentMethod == '' && $screen == 'edit_payment') {
