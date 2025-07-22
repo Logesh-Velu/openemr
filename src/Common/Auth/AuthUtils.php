@@ -47,7 +47,7 @@ use OpenEMR\Common\Auth\AuthHash;
 use OpenEMR\Common\Logging\EventAuditLogger;
 use OpenEMR\Common\Utils\RandomGenUtils;
 use OpenEMR\Services\UserService;
-
+use GuzzleHttp\Client;
 class AuthUtils
 {
     private $loginAuth = false; // standard login authentication
@@ -988,7 +988,7 @@ class AuthUtils
     {
         if ($GLOBALS['secure_password']) {
             $features = 0;
-            $reg_security = array("/[a-z]+/","/[A-Z]+/","/\d+/","/[\W_]+/");
+            $reg_security = array("/[a-z]+/", "/[A-Z]+/", "/\d+/", "/[\W_]+/");
             foreach ($reg_security as $expr) {
                 if (preg_match($expr, $pwd)) {
                     $features++;
@@ -1313,6 +1313,13 @@ class AuthUtils
 
         // Specify the CLIENT_ID of the app that accesses the backend
         $client = new Google_Client(['client_id' => $GLOBALS['google_signin_client_id']]);
+
+        // Only for development - disables SSL verification
+        $httpClient = new Client([
+            'verify' => false // INSECURE - only for local development
+        ]);
+
+        $client->setHttpClient($httpClient);
         $payload = $client->verifyIdToken($token);
 
         // ensure verify id token was successful
