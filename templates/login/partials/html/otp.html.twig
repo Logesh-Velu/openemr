@@ -1,0 +1,95 @@
+{#
+A partial used to build out the login form.
+
+* Set google_signin_info_container_class_list with an array of class names to override the form group row
+
+@todo Break this out to make a parital _just_ for the form
+
+@package OpenEMR
+@subpackage Login
+@author Robert Down <robertdown@live.com
+@copyright Copyright (c) 2023 Robert Down <robertdown@live.com>
+@copyright Copyright (c) 2023 Providence Healthtech
+@license https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
+#}
+
+<!-- OTP Login Form Modal -->
+<div id="otpformModal" class="modal fade otp-modal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-md" role="document">
+    <div class="modal-content otp-container text-center" style="border-radius: 0;">
+      <header class="otp-header">
+        <i class="bx bxs-check-shield"></i>
+      </header>
+      <button type="button" class="close rounded-3" style="border: none; background-color: white; position: absolute; right: 10px; top: 10px;" data-dismiss="modal" aria-label="Close">&times;</button>
+
+      <!-- Login Form -->
+      <form id="loginForm" class="shadow p-4 mx-auto" style="width: 100%;">
+    <h1 class="mb-4 bg-white text-center px-3">Login</h1>
+    <h5 id="formSuccess" class="mb-3 bg-success text-white p-2 rounded border border-success" style="display: none;"></h5>
+
+    <div class="form-group text-left">
+        <label for="email">Email Address</label>
+        <input type="email" class="form-control" id="email" name="email" placeholder="Email Address" required>
+        <input type="hidden" value="checkemail" name="verifyemail" >
+        <span class="error text-danger" id="emailError"></span>
+        <span id="formError" class="text-danger mt-2 d-block" style="display: none;"></span>
+    </div>
+
+    <button id="submitBtn" type="submit" class="btn btn-primary w-100">Send OTP</button>
+</form>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- OTP Verification Modal -->
+<div id="otpModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg">
+      
+      <!-- Close button -->
+      <button type="button" class="close m-2 ml-auto" data-dismiss="modal" aria-label="Close" style="z-index: 1; position: absolute; right: 10px; top: 5px;">
+        <span aria-hidden="true">&times;</span>
+      </button>
+
+      <!-- Header Icon -->
+      <div class="text-center pt-4">
+        <i class="bx bxs-check-shield text-success" style="font-size: 48px;"></i>
+      </div>
+
+      <!-- Title -->
+      <div class="modal-body text-center">
+        <h4 class="mb-2 font-weight-bold">Enter OTP Code</h4>
+        <p class="text-primary mb-3">OTP has been sent to your email</p>
+
+        <!-- Timer -->
+        <div id="otpTimer" class="font-weight-bold text-danger mb-3">05:00</div>
+
+        <!-- Error Message -->
+        <span id="formErrorotp" class="text-danger mb-3 d-block" style="display: none;"></span>
+
+        <!-- OTP Form -->
+<form class="otp-form" id="otpForm">
+  <div class="d-flex justify-content-center mb-4" id="otpInputsContainer">
+   <input type="hidden" value="verify_otp" name="used_otp_signin" >
+   <input type="hidden" value="1" name="new_login_session_management" >
+    <input type="text" maxlength="1" class="form-control text-center mx-1 otp-digit" autocomplete="off" style="width: 50px;">
+    <input type="text" maxlength="1" class="form-control text-center mx-1 otp-digit" autocomplete="off" style="width: 50px;" disabled>
+    <input type="text" maxlength="1" class="form-control text-center mx-1 otp-digit" autocomplete="off" style="width: 50px;" disabled>
+    <input type="text" maxlength="1" class="form-control text-center mx-1 otp-digit" autocomplete="off" style="width: 50px;" disabled>
+  </div>
+  <div>
+    <button id="verifyOTP" type="button" class="btn btn-primary w-50" disabled>Verify OTP</button>
+  </div>
+  <span id="formErrorotp" class="text-danger d-block mt-2" style="display: none;"></span>
+</form>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+

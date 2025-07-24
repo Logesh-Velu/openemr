@@ -963,8 +963,25 @@ if (($_POST['form_save'] ?? null) || ($_REQUEST['receipt'] ?? null)) {
                                     text(xl_list_label($brow1112['title'])) . "</option>";
                             }
                             ?>
-                        </select></td>
-                    <td><label>Auto Payment<input class="mt-2" value='autopayment' type="checkbox" name="autopayment" id="autopayment"></label></td>
+                        </select>
+                        <?php
+                        $autopayquery = "SELECT * FROM patient_stripe where pid = ?";
+                        $autopay = sqlStatement($autopayquery, array($pid));
+                        $autopaycheck = sqlNumRows($autopay) == 1 ? true : false;
+                        ?>
+                    </td>
+                    <td>
+                        <label>
+                            Auto Payment
+                            <input
+                                class="mt-2"
+                                type="checkbox"
+                                name="autopayment"
+                                id="autopayment"
+                                autocomplete="off"
+                                <?php if (!empty($autopaycheck) && $autopaycheck == '1') echo 'checked'; ?>>
+                        </label>
+                    </td>
                 </tr>
                 <?php if (isset($_SESSION['authUserID'])) { ?>
                     <tr height="5">
@@ -1449,6 +1466,32 @@ if (($_POST['form_save'] ?? null) || ($_REQUEST['receipt'] ?? null)) {
             </div>
         </div>
         <script>
+            var listenautopay = document.getElementById('autopayment');
+            if (listenautopay) {
+                listenautopay.addEventListener('change', function() {
+                    if (!this.checked) {
+                        $.ajax({
+                            type: "POST",
+                            url: "./lib/paylib.php",
+                            data: {
+                                mode: 'autopaycancel',
+                                pid: '<?php echo attr($pid); ?>'
+                            },
+                            success: function(data) {
+                                if (data === 'ok') {
+                                    alert(<?php echo xlj('Auto Payment Cancelled'); ?>);
+                                    // window.location.reload(false);
+                                } else {
+                                    alert(data);
+                                }
+                            },
+                            error: function(xhr, status, error) {
+                                alert(<?php echo xlj('Error cancelling auto payment'); ?> + ': ' + error);
+                            }
+                        });
+                    }
+                });
+            }
             var ccerr = <?php echo xlj('Invalid Credit Card Number'); ?>
 
             // In House CC number Validation

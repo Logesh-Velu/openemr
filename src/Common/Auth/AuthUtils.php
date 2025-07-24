@@ -48,6 +48,7 @@ use OpenEMR\Common\Logging\EventAuditLogger;
 use OpenEMR\Common\Utils\RandomGenUtils;
 use OpenEMR\Services\UserService;
 use GuzzleHttp\Client;
+
 class AuthUtils
 {
     private $loginAuth = false; // standard login authentication
@@ -122,14 +123,23 @@ class AuthUtils
      * @param type $email    - used in case of portal auth when a email address is required
      * @return boolean  returns true if the password for the given user is correct, false otherwise.
      */
-    public function confirmPassword($username, &$password, $email = '')
+    public function confirmPassword($username, &$password, $email = '', $otp = false)
     {
+        // If otp is set, then we are doing an OTP password check
+        if ($otp) {
+            return $this->confirmUserOtpPassword($username, $password);
+        }
+
+        // Determine which type of authentication to use
         if ($this->portalApiAuth) {
+            // Patient portal api authentication
             return $this->confirmPatientPassword($username, $password, $email);
-        } else { // $this->loginAuth || $this->apiAuth || $this->otherAuth
+        } elseif ($this->loginAuth || $this->apiAuth || $this->otherAuth) {
+            // Standard user authentication
             return $this->confirmUserPassword($username, $password);
         }
     }
+
 
     /**
      *
@@ -492,6 +502,153 @@ class AuthUtils
             // Log for authentication that are done, which are not api auth or login auth
             EventAuditLogger::instance()->newEvent('auth', $username, $authGroup, 1, "Auth success: " . $ip['ip_string']);
         }
+        return true;
+    }
+    private function confirmUserOtpPassword($username, &$password)
+    {
+        // Set variables for log
+        if ($this->loginAuth) {
+            $event = 'login';
+            $beginLog = 'failure';
+        } elseif ($this->apiAuth) {
+            $event = 'api';
+            $beginLog = 'API failure';
+        } else {
+            $event = 'auth';
+            $beginLog = 'Auth failure';
+        }
+
+        $ip = collectIpAddresses();
+
+        if ($this->loginAuth || $this->apiAuth) {
+            $this->setupIpLoginFailedCounter($ip['ip_string']);
+            $returnArray = $this->checkIpLoginFailedCounter($ip['ip_string']);
+            if (!$returnArray['pass']) {
+                $this->incrementIpLoginFailedCounter($ip['ip_string']);
+                EventAuditLogger::instance()->newEvent($event, $username, '', 0, $beginLog . ": IP blocked or too many failed attempts");
+                $this->clearFromMemory($password);
+                if ($returnArray['email_notification']) {
+                    $this->notifyIpBlock($ip['ip_string']);
+                }
+                if (!$returnArray['skip_timing_attack']) {
+                    $this->preventTimingAttack();
+                }
+                return false;
+            }
+        }
+
+        if (empty($username) || empty($password)) {
+            if ($this->loginAuth || $this->apiAuth) {
+                $this->incrementIpLoginFailedCounter($ip['ip_string']);
+            }
+            EventAuditLogger::instance()->newEvent($event, $username, '', 0, $beginLog . ": empty username or password");
+            $this->clearFromMemory($password);
+            $this->preventTimingAttack();
+            return false;
+        }
+
+        $getUserSQL = "SELECT `id`, `authorized`, `see_auth`, `active` FROM `users` WHERE BINARY `username` = ?";
+        $userInfo = privQuery($getUserSQL, [$username]);
+        if (empty($userInfo) || empty($userInfo['id']) || $userInfo['active'] != 1) {
+            if ($this->loginAuth || $this->apiAuth) {
+                $this->incrementIpLoginFailedCounter($ip['ip_string']);
+            }
+            EventAuditLogger::instance()->newEvent($event, $username, '', 0, $beginLog . ": user not found or not active");
+            $this->clearFromMemory($password);
+            $this->preventTimingAttack();
+            return false;
+        }
+
+        $authGroup = UserService::getAuthGroupForUser($username);
+        if (empty($authGroup) || AclExtended::aclGetGroupTitles($username) == 0) {
+            if ($this->loginAuth || $this->apiAuth) {
+                $this->incrementIpLoginFailedCounter($ip['ip_string']);
+            }
+            EventAuditLogger::instance()->newEvent($event, $username, '', 0, $beginLog . ": user not in group or ACL");
+            $this->clearFromMemory($password);
+            $this->preventTimingAttack();
+            return false;
+        }
+
+        $getUserSecureSQL = "SELECT `id`, `password` FROM `users_secure` WHERE BINARY `username` = ?";
+        $userSecure = privQuery($getUserSecureSQL, [$username]);
+        if (empty($userSecure) || empty($userSecure['id']) || empty($userSecure['password'])) {
+            if ($this->loginAuth || $this->apiAuth) {
+                $this->incrementIpLoginFailedCounter($ip['ip_string']);
+            }
+            EventAuditLogger::instance()->newEvent($event, $username, $authGroup, 0, $beginLog . ": credentials not found");
+            $this->clearFromMemory($password);
+            $this->preventTimingAttack();
+            return false;
+        }
+
+        if ($this->loginAuth || $this->apiAuth) {
+            $checkArray = $this->checkLoginFailedCounter($username);
+            if (!$checkArray['pass']) {
+                $this->incrementLoginFailedCounter($username);
+                $this->incrementIpLoginFailedCounter($ip['ip_string']);
+                EventAuditLogger::instance()->newEvent($event, $username, $authGroup, 0, $beginLog . ": too many failed logins");
+                $this->clearFromMemory($password);
+                if ($checkArray['email_notification']) {
+                    $this->notifyUserBlock($username);
+                }
+                $this->preventTimingAttack();
+                return false;
+            }
+        }
+
+        // 🔑 SKIP PASSWORD CHECK IF FLAG IS SET (AFTER OTP)
+        if (!isset($_SESSION['bypass_password']) || $_SESSION['bypass_password'] !== true) {
+            if (!AuthHash::hashValid($userSecure['password']) || !AuthHash::passwordVerify($password, $userSecure['password'])) {
+                if ($this->loginAuth || $this->apiAuth) {
+                    $this->incrementLoginFailedCounter($username);
+                    $this->incrementIpLoginFailedCounter($ip['ip_string']);
+                }
+                EventAuditLogger::instance()->newEvent($event, $username, $authGroup, 0, $beginLog . ": password incorrect");
+                $this->clearFromMemory($password);
+                return false;
+            }
+        }
+
+        // Optional: rehash password if needed
+        if (($this->loginAuth || $this->apiAuth) && $this->authHashAuth->passwordNeedsRehash($userSecure['password'])) {
+            $newHash = $this->rehashPassword($username, $password);
+            privStatement("UPDATE `users_secure` SET `password` = ? WHERE `id` = ?", [$newHash, $userSecure['id']]);
+        }
+
+        // Password expiration check (skip for LDAP)
+        if (!self::useActiveDirectory($username)) {
+            if (!$this->checkPasswordNotExpired($username)) {
+                $this->incrementIpLoginFailedCounter($ip['ip_string']);
+                EventAuditLogger::instance()->newEvent($event, $username, $authGroup, 0, $beginLog . ": password expired");
+                $this->clearFromMemory($password);
+                return false;
+            }
+        }
+
+        $this->clearFromMemory($password);
+
+        // Final session/auth setup
+        if ($this->loginAuth || $this->apiAuth) {
+            self::resetLoginFailedCounter($username);
+            $this->resetIpLoginFailedCounter($ip['ip_string']);
+        }
+
+        if ($this->loginAuth) {
+            $hash = isset($newHash) ? $newHash : $userSecure['password'];
+            if (empty($hash)) {
+                error_log('OpenEMR Error: Broken login function.');
+                die("OpenEMR Error: Broken login function.");
+            }
+            self::setUserSessionVariables($username, $hash, $userInfo, $authGroup);
+            EventAuditLogger::instance()->newEvent('login', $username, $authGroup, 1, "success: " . $ip['ip_string']);
+        } elseif ($this->apiAuth) {
+            $this->userId = $userInfo['id'];
+            $this->userGroup = $authGroup;
+        } else {
+            EventAuditLogger::instance()->newEvent('auth', $username, $authGroup, 1, "Auth success: " . $ip['ip_string']);
+        }
+
         return true;
     }
 
@@ -1295,6 +1452,25 @@ class AuthUtils
      * @param $token
      * @return bool
      */
+
+    public static function verifyOtpSignIn($email)
+    {
+        if (empty($email)) {
+            return false;
+        }
+
+        // Fetch user by email (make sure to return associative array)
+        $user = privQuery("SELECT `id`, `username` FROM `users` WHERE `email` = ?", [$email], true);
+
+        if (!empty($user)) {
+            return $user;
+        }
+
+        return false;
+    }
+
+
+
     public static function verifyGoogleSignIn($token)
     {
         $event = 'login';

@@ -36,18 +36,296 @@ and semantic choices
         }
     </style>
     {% endblock %}
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const passInput = document.getElementById('clearPass');
-            const toggle = document.getElementById('password-icon');
+ <script>
+    function loginotpform() {
+        $('#otpformModal').modal('show');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // ------------------ Password Toggle ------------------
+        const passInput = document.getElementById('clearPass');
+        const toggle = document.getElementById('password-icon');
+
+        if (passInput && toggle) {
             toggle.addEventListener('click', function () {
                 const isPassword = passInput.getAttribute('type') === 'password';
                 passInput.setAttribute('type', isPassword ? 'text' : 'password');
                 this.classList.toggle('fa-eye');
                 this.classList.toggle('fa-eye-slash');
             });
+        }
+
+        // ------------------ Login Submit ------------------
+        const loginForm = document.getElementById('loginForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const emailInput = document.getElementById('email');
+        const emailError = document.getElementById('emailError');
+        const formError = document.getElementById('formError');
+        const formSuccess = document.getElementById('formSuccess');
+
+        loginForm?.addEventListener('submit', function (e) {
+            e.preventDefault();
+            emailError.textContent = '';
+            formError.style.display = 'none';
+            formError.textContent = '';
+
+            if (!validateForm()) return;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...`;
+
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "../main/main_screen.php", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.status === 'success') {
+                            formSuccess.textContent = response.message || 'Login successful';
+                            formSuccess.style.display = 'block';
+                             $('#otpformModal').modal('hide');
+                             startOTPTimer();
+                                showOtpModal();
+                           
+                        } else {
+                            formError.textContent = response.message || 'Invalid credentials';
+                            formError.style.display = 'block';
+                        }
+                    } catch {
+                        formError.textContent = 'Invalid server response';
+                        formError.style.display = 'block';
+                    }
+                } else {
+                    formError.textContent = 'An error occurred. Please try again.';
+                    formError.style.display = 'block';
+                }
+            };
+
+            xhr.onerror = () => {
+                formError.textContent = 'Request failed. Please check your network.';
+                formError.style.display = 'block';
+            };
+
+            xhr.onloadend = () => {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Login';
+            };
+
+            const formData = new FormData(loginForm);
+            xhr.send(new URLSearchParams(formData).toString());
         });
-    </script>
+
+        function validateForm() {
+            const email = emailInput.value.trim();
+            const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+            let isValid = true;
+
+            if (!email) {
+                emailError.textContent = 'Email is required';
+                isValid = false;
+            } else if (!emailPattern.test(email)) {
+                emailError.textContent = 'Please enter a valid email address';
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // ------------------ OTP Handling ------------------
+        const otpModal = document.getElementById('otpModal');
+        const otpInputs = document.querySelectorAll('.otp-digit');
+        const verifyOTPBtn = document.getElementById('verifyOTP');
+        const otpErrorBox = document.getElementById('formErrorotp');
+        let timerInterval;
+        const otpTimer = document.getElementById("otpTimer");
+
+        function showOtpModal() {
+            if (typeof bootstrap !== 'undefined') {
+                new bootstrap.Modal(otpModal).show();
+            } else {
+                otpModal.classList.add('show');
+                otpModal.style.display = 'block';
+            }
+        }
+
+       function hideOtpModal() {
+            const modal = document.getElementById('otpModal');
+            if (modal) {
+                modal.classList.remove('show');        // Remove Bootstrap's "show" class
+                modal.style.display = 'none';          // Hide the modal
+                modal.setAttribute('aria-hidden', 'true');
+
+                // Optional: remove backdrop if manually added
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.parentNode.removeChild(backdrop);
+                }
+
+                // Optional: remove 'modal-open' class from body
+                document.body.classList.remove('modal-open');
+            }
+        }
+
+
+        function startOTPTimer(duration = 300) {
+            let timer = duration;
+            timerInterval = setInterval(() => {
+                const minutes = String(Math.floor(timer / 60)).padStart(2, '0');
+                const seconds = String(timer % 60).padStart(2, '0');
+                otpTimer.textContent = `${minutes}:${seconds}`;
+                if (--timer < 0) {
+                    clearInterval(timerInterval);
+                    otpTimer.textContent = "Time's up!";
+                    verifyOTPBtn.disabled = true;
+                    location.reload();
+                }
+            }, 1000);
+        }
+
+        otpModal?.addEventListener('shown.bs.modal', () => {
+            otpInputs.forEach((input, i) => {
+                input.value = '';
+                input.disabled = i !== 0;
+            });
+            otpInputs[0].focus();
+            verifyOTPBtn.disabled = true;
+            otpErrorBox.style.display = 'none';
+            startOTPTimer(60);
+        });
+
+        otpModal?.addEventListener('hidden.bs.modal', () => {
+            clearInterval(timerInterval);
+            otpTimer.textContent = "01:00";
+            verifyOTPBtn.disabled = false;
+        });
+
+        otpInputs.forEach((input, index) => {
+            input.addEventListener("input", (e) => {
+                input.value = input.value.replace(/\D/g, '').slice(0, 1);
+                if (input.value && index < otpInputs.length - 1) {
+                    otpInputs[index + 1].disabled = false;
+                    setTimeout(() => otpInputs[index + 1].focus(), 10);
+                }
+                checkAllOtpFilled();
+            });
+
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Backspace") {
+                    if (!input.value && index > 0) {
+                        otpInputs[index - 1].focus();
+                        otpInputs[index - 1].value = '';
+                        for (let i = index; i < otpInputs.length; i++) {
+                            otpInputs[i].value = '';
+                            otpInputs[i].disabled = true;
+                        }
+                    }
+                } else if (e.key === "ArrowLeft" && index > 0) {
+                    otpInputs[index - 1].focus();
+                } else if (e.key === "ArrowRight" && index < otpInputs.length - 1 && !otpInputs[index + 1].disabled) {
+                    otpInputs[index + 1].focus();
+                }
+            });
+        });
+
+        function checkAllOtpFilled() {
+            const allFilled = Array.from(otpInputs).every(input => input.value.length === 1 && !input.disabled);
+            verifyOTPBtn.disabled = !allFilled;
+        }
+
+        verifyOTPBtn?.addEventListener('click', () => {
+            const otp = Array.from(otpInputs).map(input => input.value).join('');
+            const email = emailInput.value.trim();
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '../main/main_screen.php?auth=login&site=default', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+            xhr.onload = function () {
+                console.log("Raw Response:", xhr.responseText);
+                try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.status === 'success') {
+                            // Show success message
+                            formSuccess.textContent = response.message;
+                            formSuccess.style.display = 'block';
+
+                            // Hide OTP modal
+                            hideOtpModal();
+
+                            // Get the selected language value from the dropdown
+                            const selectedLanguage = document.querySelector('select[name="languageChoice"]').value;
+
+                            // Create a hidden form to submit the login automatically
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = '../main/main_screen.php?auth=login&site=default';
+
+                            // Username
+                            const usernameField = document.createElement('input');
+                            usernameField.type = 'hidden';
+                            usernameField.name = 'authUser';
+                            usernameField.value = response.username;
+                            form.appendChild(usernameField);
+
+                            // New session
+                            const newLoginSession = document.createElement('input');
+                            newLoginSession.type = 'hidden';
+                            newLoginSession.name = 'new_login_session_management';
+                            newLoginSession.value = '1';
+                            form.appendChild(newLoginSession);
+
+                            // Bypass password
+                            const bypassField = document.createElement('input');
+                            bypassField.type = 'hidden';
+                            bypassField.name = 'bypass_password';
+                            bypassField.value = '1';
+                            form.appendChild(bypassField);
+
+                    const otpLoginField = document.createElement('input');
+                            otpLoginField.type = 'hidden';
+                            otpLoginField.name = 'otplogin';
+                            otpLoginField.value = '1';
+                            form.appendChild(otpLoginField);
+                            
+                            // Language choice
+                            const languageField = document.createElement('input');
+                            languageField.type = 'hidden';
+                            languageField.name = 'languageChoice';
+                            languageField.value = selectedLanguage;
+                            form.appendChild(languageField);
+
+                            // Submit form
+                            document.body.appendChild(form);
+                            form.submit();
+                        } else {
+                            otpErrorBox.textContent = response.message || 'OTP verification failed.';
+                            otpErrorBox.style.display = 'block';
+                        }
+                    } catch (err) {
+                        otpErrorBox.textContent = err;
+                        otpErrorBox.style.display = 'block';
+                    }
+
+            };
+
+            xhr.onerror = function () {
+                otpErrorBox.textContent = 'Request failed. Check your network.';
+                otpErrorBox.style.display = 'block';
+            };
+
+            xhr.send(
+                "otp=" + encodeURIComponent(otp) +
+                "&email=" + encodeURIComponent(email) +
+                "&new_login_session_management=" + encodeURIComponent(1) +
+                "&used_otp_signin=" + encodeURIComponent('verify_otp') +
+                "&authUser=" + encodeURIComponent('') +
+                "&clearPass=" + encodeURIComponent('')
+            );
+        });
+    });
+</script>
+
 </head>
 <body>
 

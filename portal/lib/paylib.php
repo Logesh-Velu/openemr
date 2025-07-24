@@ -205,6 +205,19 @@ function SaveAudit($pid, $amts, $cc)
 
     return 0;
 }
+if($_POST['mode'] == 'autopaycancel'){
+    $pid = $_POST['pid'];
+   $autoquery = "DELETE FROM patient_stripe WHERE pid = ? ";
+   $autosql = sqlStatement($autoquery, array($pid));
+   if (!$autosql) {
+        echo 'failed';
+        exit();
+    }
+
+    echo 'ok';
+    exit();
+  
+}
 
 function CloseAudit($pid, $amts, $cc, $action = 'payment posted', $paction = 'notify patient')
 {

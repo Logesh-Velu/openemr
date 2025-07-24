@@ -28,6 +28,7 @@ use OpenEMR\Services\FacilityService;
 use OpenEMR\Services\ListService;
 use u2flib_server\U2F;
 
+
 ///////////////////////////////////////////////////////////////////////
 // Functions to support MFA.
 ///////////////////////////////////////////////////////////////////////
@@ -41,17 +42,18 @@ function posted_to_hidden($name)
 
 function generate_html_start()
 {
-    ?>
+?>
     <html>
+
     <head>
-    <?php Header::setupHeader(); ?>
-    <title><?php echo xlt("MFA Authorization"); ?></title>
-    <style>
-    .alert-msg {
-        font-size:100%;
-        font-weight:700;
-    }
-    </style>
+        <?php Header::setupHeader(); ?>
+        <title><?php echo xlt("MFA Authorization"); ?></title>
+        <style>
+            .alert-msg {
+                font-size: 100%;
+                font-weight: 700;
+            }
+        </style>
     <?php
 }
 
@@ -59,44 +61,46 @@ function generate_html_u2f()
 {
     global $appId;
     ?>
-    <script src="<?php echo $GLOBALS['webroot'] ?>/library/js/u2f-api.js"></script>
-    <script>
-        function doAuth() {
-            var f = document.getElementById("u2fform");
-            var requests = JSON.parse(f.form_requests.value);
-            // The server's getAuthenticateData() repeats the same challenge in all requests.
-            var challenge = requests[0].challenge;
-            var registeredKeys = new Array();
-            for (var i = 0; i < requests.length; ++i) {
-                registeredKeys[i] = {"version": requests[i].version, "keyHandle": requests[i].keyHandle};
+        <script src="<?php echo $GLOBALS['webroot'] ?>/library/js/u2f-api.js"></script>
+        <script>
+            function doAuth() {
+                var f = document.getElementById("u2fform");
+                var requests = JSON.parse(f.form_requests.value);
+                // The server's getAuthenticateData() repeats the same challenge in all requests.
+                var challenge = requests[0].challenge;
+                var registeredKeys = new Array();
+                for (var i = 0; i < requests.length; ++i) {
+                    registeredKeys[i] = {
+                        "version": requests[i].version,
+                        "keyHandle": requests[i].keyHandle
+                    };
+                }
+                u2f.sign(
+                    <?php echo js_escape($appId); ?>,
+                    challenge,
+                    registeredKeys,
+                    function(data) {
+                        if (data.errorCode && data.errorCode != 0) {
+                            alert(<?php echo xlj("Key access failed with error"); ?> + ' ' + data.errorCode);
+                            return;
+                        }
+                        f.form_response.value = JSON.stringify(data);
+                        f.submit();
+                    },
+                    60
+                );
             }
-            u2f.sign(
-                <?php echo js_escape($appId); ?>,
-                challenge,
-                registeredKeys,
-                function (data) {
-                    if (data.errorCode && data.errorCode != 0) {
-                        alert(<?php echo xlj("Key access failed with error"); ?> +' ' + data.errorCode);
-                        return;
-                    }
-                    f.form_response.value = JSON.stringify(data);
-                    f.submit();
-                },
-                60
-            );
-        }
-
-    </script>
+        </script>
     <?php
 }
 function input_focus()
 {
     ?>
-    <script>
-        $(function () {
+        <script>
+            $(function() {
                 $('#totp').focus();
-        });
-    </script>
+            });
+        </script>
 
     <?php
 }
@@ -131,16 +135,17 @@ function generate_html_end()
     return 0;
 }
 
+
 if (isset($_POST['new_login_session_management'])) {
-///////////////////////////////////////////////////////////////////////
-// Begin code to support U2F and APP Based TOTP logic.
-///////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////
+    // Begin code to support U2F and APP Based TOTP logic.
+    ///////////////////////////////////////////////////////////////////////
     $errormsg = '';
     $regs = array();          // for mapping device handles to their names
     $registrations = array(); // the array of stored registration objects
     $res1 = sqlStatement(
         "SELECT a.name, a.method, a.var1 FROM login_mfa_registrations AS a " .
-        "WHERE a.user_id = ? AND (a.method = 'TOTP' OR a.method = 'U2F') ORDER BY a.name",
+            "WHERE a.user_id = ? AND (a.method = 'TOTP' OR a.method = 'U2F') ORDER BY a.name",
         array($_SESSION['authUserID'])
     );
 
@@ -241,7 +246,7 @@ if (isset($_POST['new_login_session_management'])) {
                     if (isset($regs[$strhandle])) {
                         sqlStatement(
                             "UPDATE login_mfa_registrations SET `var1` = ? WHERE " .
-                            "`user_id` = ? AND `method` = 'U2F' AND `name` = ?",
+                                "`user_id` = ? AND `method` = 'U2F' AND `name` = ?",
                             array(json_encode($registration), $userid, $regs[$strhandle])
                         );
                     } else {
@@ -472,4 +477,4 @@ if ((isset($_POST['appChoice'])) && ($_POST['appChoice'] !== '*OpenEMR')) {
 $_SESSION['token_main_php'] = RandomGenUtils::createUniqueToken();
 header('Location: ' . $web_root . "/interface/main/tabs/main.php?token_main=" . urlencode($_SESSION['token_main_php']));
 exit();
-?>
+    ?>
